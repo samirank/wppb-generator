@@ -21,9 +21,10 @@ async function downloadAndUnzip(url, downloadPath, extractPath) {
 
     // Step 3: Unzip the zip file
     const zip = new AdmZip(downloadPath);
-    zip.extractAllTo(extractPath, true);;
+    zip.extractAllTo(extractPath, true);
   } catch (error) {
     console.error('Error downloading or unzipping the file', error);
+    throw error; // Re-throw to allow proper error handling
   }
 }
 

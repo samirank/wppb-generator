@@ -5,11 +5,12 @@ import { TextField } from '@/components/Fields'
 import { useState } from 'react'
 
 export default function Form(props) {
-  const data = {}
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const handleChange = (name, e) => {
-    props.updateData({ ...data, [name]: e.target.value })
+    // This function is called by TextField components
+    // The form state is managed by react-hook-form
   }
 
   const validationSchema = Yup.object({
@@ -36,33 +37,46 @@ export default function Form(props) {
 
   const onSubmit = async (form) => {
     setLoading(true)
-    const data = {
-      plugin: {
-        name: form.pluginName,
-        slug: form.pluginSlug,
-        uri: `https://${form.pluginUri}`,
-        description: form.pluginDescription,
-      },
-      author: {
-        name: form.authorName,
-        email: form.authorEmail,
-        uri: `https://${form.authorUri}`,
-      },
-    }
+    setError(null)
+    
+    try {
+      const data = {
+        plugin: {
+          name: form.pluginName,
+          slug: form.pluginSlug,
+          uri: `https://${form.pluginUri}`,
+          description: form.pluginDescription,
+        },
+        author: {
+          name: form.authorName,
+          email: form.authorEmail,
+          uri: `https://${form.authorUri}`,
+        },
+      }
 
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-    const blob = await response.blob()
-    // Hacky wat to force the download
-    const a = document.createElement('a')
-    a.href = window.URL.createObjectURL(blob)
-    a.download = `${form.pluginSlug}.zip`
-    a.click()
-    reset()
-    setLoading(false)
-    props.onSubmit()
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate plugin')
+      }
+      
+      const blob = await response.blob()
+      // Hacky way to force the download
+      const a = document.createElement('a')
+      a.href = window.URL.createObjectURL(blob)
+      a.download = `${form.pluginSlug}.zip`
+      a.click()
+      reset()
+      props.onSubmit()
+    } catch (err) {
+      setError(err.message || 'An error occurred while generating the plugin')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -70,6 +84,20 @@ export default function Form(props) {
       onSubmit={handleSubmit(onSubmit)}
       className="mb-10 w-full space-y-5 divide-y divide-slate-200  rounded-lg border border-slate-200 px-10 py-5 shadow-lg dark:divide-zinc-700/40 dark:border-zinc-700/40 dark:bg-zinc-700/[0.3] lg:mb-0 lg:mr-10 lg:w-6/12 "
     >
+      {error && (
+        <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                Error
+              </h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                {error}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-8">
         <div className="mt-6 grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
           <div className="sm:col-span-3">
