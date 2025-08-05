@@ -3,9 +3,9 @@
 import Script from 'next/script'
 import * as gtag from '@/lib/gtag.js'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 
-const GoogleAnalytics = () => {
+const GoogleAnalyticsInner = () => {
   // We need to sent the pageview event manually on page change
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -36,6 +36,14 @@ const GoogleAnalytics = () => {
         }}
       />
     </>
+  )
+}
+
+const GoogleAnalytics = () => {
+  return (
+    <Suspense fallback={null}>
+      <GoogleAnalyticsInner />
+    </Suspense>
   )
 }
 
