@@ -23,25 +23,36 @@ let destination
 let zipName
 
 export async function POST(request) {
-  // Delete all in the extract path folder
-  rimraf.sync(extractPath)
-  // Get the master zip file from GitHub
-  await downloadAndUnzip(remoteGithubMaster, downloadPath, extractPath)
-  // Replace all the strings in the files
-  await replaceStrings(request)
-  // Create a zip file
-  const zip = await createZip()
-  // Track Build
-  await trackDownload()
+  try {
+    // Delete all in the extract path folder
+    rimraf.sync(extractPath)
+    // Get the master zip file from GitHub
+    await downloadAndUnzip(remoteGithubMaster, downloadPath, extractPath)
+    // Replace all the strings in the files
+    await replaceStrings(request)
+    // Create a zip file
+    const zip = await createZip()
+    // Track Build
+    await trackDownload()
 
-  const zipFile = await fs.readFile(zip)
-  // send it as a download
-  return new NextResponse(zipFile, {
-    headers: {
-      'content-type': 'application/zip',
-      'content-disposition': `attachment; filename=${zipName}.zip`,
-    },
-  })
+    const zipFile = await fs.readFile(zip)
+    // send it as a download
+    return new NextResponse(zipFile, {
+      headers: {
+        'content-type': 'application/zip',
+        'content-disposition': `attachment; filename=${zipName}.zip`,
+      },
+    })
+  } catch (error) {
+    console.error('Error generating plugin:', error)
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to generate plugin. Please try again.' }),
+      {
+        status: 500,
+        headers: { 'content-type': 'application/json' },
+      }
+    )
+  }
 }
 
 const createZip = async () => {

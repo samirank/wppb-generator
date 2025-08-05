@@ -14,7 +14,8 @@ async function getFilesInDir(dir) {
       }
     }
   } catch (error) {
-    console.error('Error reading directory', error)
+    console.error('Error reading directory:', dir, error)
+    throw new Error(`Failed to read directory: ${dir}`)
   }
   
   return files
